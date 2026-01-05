@@ -1,0 +1,42 @@
+To begin this analysis, we first require data from a sky region containing a large number of galaxies, among which several may belong to a galaxy cluster. For this purpose, we make use of the Sloan Digital Sky Survey (SDSS) spectroscopic data archive. To streamline the analysis and save time, we directly use the redshift values provided by SDSS for galaxies in the selected field. An alternative approach would involve downloading the individual spectra of each galaxy and determining their redshifts manually by identifying spectral features; however, this method is significantly more time-consuming.
+
+There are multiple ways to retrieve the required data from the SDSS archive. In this work, we employ an SQL-based query to extract the relevant information efficiently. The SQL query provided below is designed to return detailed observational data for galaxies located within a circular region of 10 arcminutes radius, centred at Right Ascension (RA) = 258.1294° and Declination (Dec) = 64.0926°. The query selects only galaxies with spectroscopic redshifts in the range 0.05 < z < 0.20, which is appropriate for identifying potential cluster members.
+
+The query retrieves a comprehensive set of parameters, including celestial coordinates, photometric and spectroscopic redshifts (along with their uncertainties), projected separations, and photometric magnitudes in multiple bands. This information is essential for identifying cluster members and characterizing the dynamical properties of the system.
+
+To execute the query, navigate to the SDSS SkyServer SQL Search page. Before pasting the script, ensure that the query input box is cleared by clicking “Clear Query”, and then copy and paste the SQL code provided below into the interface.
+
+SDSS SkyServer: http://skyserver.sdss.org/dr16/en/tools/search/sql.aspx
+
+## SCRIPT
+
+SELECT
+    s.objid,
+    sz.ra AS ra,
+    sz.dec AS dec,
+    pz.z AS photoz,
+    pz.zerr AS photozerr,
+    sz.z AS specz,
+    sz.zerr AS speczerr,
+    b.distance AS proj_sep,
+    s.modelMag_u AS umag,
+    s.modelMagErr_u AS umagerr,
+    s.modelMag_g AS gmag,
+    s.modelMagErr_g AS gmagerr,
+    s.modelMag_r AS rmag,
+    s.modelMagErr_r AS rmagerr,
+    s.type AS obj_type
+FROM BESTDR16..PhotoObjAll AS s
+JOIN dbo.fGetNearbyObjEq(258.1294, 64.0926, 10.0) AS b
+    ON b.objID = s.objID
+JOIN Photoz AS pz
+    ON pz.objid = s.objid
+JOIN SpecObjAll AS sz
+    ON sz.bestobjid = s.objid
+WHERE s.type = 3
+  AND sz.z > 0.05
+  AND sz.z < 0.20;
+
+
+
+
